@@ -1,0 +1,12 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import {overallStatus,summary,updateStatus,addIncident} from "../status.js";
+const services=[{id:"a",name:"API",status:"operational"},{id:"b",name:"DB",status:"maintenance"}];
+test("maintenance summary",()=>assert.equal(overallStatus(services),"maintenance"));
+test("outage has priority",()=>assert.equal(overallStatus([...services,{id:"c",name:"Web",status:"outage"}]),"outage"));
+test("degraded has priority over maintenance",()=>assert.equal(overallStatus([...services,{id:"c",name:"Web",status:"degraded"}]),"degraded"));
+test("count by status",()=>assert.equal(summary(services).counts.operational,1));
+test("update service",()=>assert.equal(updateStatus(services,"a","outage")[0].status,"outage"));
+test("invalid status rejected",()=>assert.throws(()=>updateStatus(services,"a","unknown")));
+test("incident created",()=>assert.equal(addIncident([],{title:"Slow requests",serviceId:"a",severity:"minor",createdAt:"2026-11-05"}).length,1));
+test("invalid incident rejected",()=>assert.throws(()=>addIncident([],{title:"X",serviceId:"a",severity:"minor",createdAt:"2026-11-05"})));
